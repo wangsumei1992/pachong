@@ -7,12 +7,13 @@ class Douban(object):
     def __init__(self):
         self.book_url = 'https://book.douban.com'
         self.movie_url = 'https://movie.douban.com/cinema/nowplaying/beijing/'
-        self.dr = webdriver.Chrome()
 
     def __enter__(self):
-        pass
+        self.dr = webdriver.Chrome()
+        self.dr.maximize_window()
+        return self
 
-    def __exit__(self):
+    def __exit__(self, exc_type, exc_value, traceback):
         self.dr.quit()
 
     def get_nowplaying_movies(self):
@@ -25,14 +26,16 @@ class Douban(object):
         for card in cards:
             item = {}
             item['name'] = card.find_element_by_css_selector('.stitle>a ').get_attribute('title')
-            item['rate'] = card.find_element_by_css_selector('.srating').text
+            item['rate'] = card.find_element_by_css_selector('.subject-rate').text
+            #self.dr.implicitly_wait(3)
             if item['name'] and item['rate']:
                 movies.append(item)
-            return sorted(movies, key=by_rate, reverse=True)
+        return sorted(movies, key=by_rate, reverse=True)
 
 if __name__ == '__main__':
-    douban = Douban()
-    douban.get_nowplaying_movies()
+    with Douban() as douban:
+        movies = douban.get_nowplaying_movies()
+        print(movies)
 
 
 
