@@ -1,7 +1,7 @@
 """从知乎获取每日最热和每月最热"""
 
 from selenium import webdriver
-import time
+import datetime
 
 class Zhihu:
 
@@ -41,7 +41,48 @@ class Zhihu:
         article['content'] = self.dr.find_element_by_class_name('RichContent-inner').get_attribute('innerHTML')
         return article
 
+class ZhihuReporter:
+        def __init__(self):
+            self.report_path = path
+            self.f = open(path, 'wb')
+
+        def write_header(self):
+            self.f.write('<html><head><meta charset="utf-8">')
+            self.f.write('<link rel="stylesheet" href="http://cdn.bootcss.com/bootstrap/3.3.6/css/bootstrap.min.css">')
+            self.f.write('<title>Zhihu Report</title></head>')
+
+        def write_body(self):
+            self.f.write('<body>')
+
+        def finish_body(self):
+            self.f.write('</body>')
+
+        def write_article(self, articles):
+            self.f.write('<h3>知乎%s最热</h3>' %(datetime.date.today().strftime('%Y_%m_%d')))
+            for article in articles:
+
+                self.f.write('<div class="container">')
+                article_html = '<h3>%s<small>%s</small></h3>' %(article['title'], article['author'])
+                article_html += article['content']
+                self.f.write(article_html)
+                self.f.write('</div>')
+                self.f.write('<hr>')
+
+        def finish_report(self):
+            self.finish_body()
+            self.f.write('</html>')
+            self.f.close()
+
+        def build_article_report(self, articles):
+            self.write_header()
+            self.write_body()
+            self.write_article()
+            self.finish_report()
+
+
 if __name__ == '__main__':
     with Zhihu() as zhihu:
         articles = zhihu.get_daily_hots()
-        print(articles)
+        report_name = 'zhihu_%s.html' % (datetime.date.today().strftime('%Y_%m_%d'))
+        reporter = ZhihuReporter(report_name)
+        reporter.build_article_report(articles)
